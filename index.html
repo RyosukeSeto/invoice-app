@@ -662,9 +662,11 @@ async function generatePDF() {
   ctx.fillText('ご請求金額', 60, 215);
   font(36, 'bold');
   ctx.fillStyle = '#1a1a1a';
-  ctx.fillText(fmt(data.total), 200, 220);
+  const totalAmountText = fmt(data.total);
+  const totalAmountWidth = ctx.measureText(totalAmountText).width;
+  ctx.fillText(totalAmountText, 200, 220);
   font(16);
-  ctx.fillText('円', 200 + ctx.measureText(fmt(data.total)).width + 6, 220);
+  ctx.fillText('円', 200 + totalAmountWidth + 8, 220);
 
   ctx.strokeStyle = '#1a1a1a';
   ctx.lineWidth = 1.5;
@@ -820,11 +822,19 @@ async function saveToSheet(data) {
     invoiceNo: data.invoiceNo,
     name: data.name,
     accountName: data.accountName,
+    zip: data.zip,
+    address: data.address,
+    tel: data.tel,
     itemsSummary: itemsSummary,
     subtotal: data.total,
     tax: data.tax,
     total: data.total,
-    dueDate: data.dueDate
+    dueDate: data.dueDate,
+    bankName: data.bankName,
+    branch: data.branch,
+    accountType: data.accountType,
+    accountNo: data.accountNo,
+    accountHolder: data.accountHolder
   };
 
   try {
