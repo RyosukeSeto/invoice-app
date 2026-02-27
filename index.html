@@ -805,6 +805,39 @@ async function generatePDF() {
 
   const dateStr = data.invoiceDate.replace(/-/g, '') || 'invoice';
   pdf.save(`請求書_${dateStr}.pdf`);
+
+  // スプレッドシートに記録
+  saveToSheet(data);
+}
+
+async function saveToSheet(data) {
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbxj5ViQ2qcfTqXdEY9_A0BNriyzBa6hkypHfB55gu9YuoIwdsTGsGmC5AYKSxCWuCHjyg/exec';
+  
+  const itemsSummary = data.items.map(it => `${it.content}×${it.qty}`).join('、');
+
+  const payload = {
+    invoiceDate: data.invoiceDate ? formatDateJP(data.invoiceDate) : '',
+    invoiceNo: data.invoiceNo,
+    name: data.name,
+    accountName: data.accountName,
+    itemsSummary: itemsSummary,
+    subtotal: data.total,
+    tax: data.tax,
+    total: data.total,
+    dueDate: data.dueDate
+  };
+
+  try {
+    await fetch(GAS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    console.log('スプレッドシートに記録しました');
+  } catch (err) {
+    console.error('記録エラー:', err);
+  }
 }
 
 function sendEmail() {
