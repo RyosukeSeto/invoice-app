@@ -517,6 +517,11 @@ function removeItem(i) {
   renderItems();
 }
 
+// ★ 内税計算ヘルパー関数
+function calcTaxIncluded(amount) {
+  return Math.floor(amount - amount / 1.1);
+}
+
 function renderItems() {
   const container = document.getElementById('itemsContainer');
   container.innerHTML = '';
@@ -524,7 +529,7 @@ function renderItems() {
     const row = document.createElement('div');
     row.className = 'item-row';
     const amount = item.qty * item.price;
-    const tax = Math.floor(amount * 0.1);
+    const tax = calcTaxIncluded(amount);
     row.innerHTML = `
       <input type="text" placeholder="内容" value="${item.content}"
         oninput="items[${i}].content=this.value">
@@ -543,7 +548,7 @@ function renderItems() {
 
 function updateTotal() {
   const subtotal = items.reduce((s, it) => s + it.qty * it.price, 0);
-  const tax = Math.floor(subtotal * 0.1);
+  const tax = calcTaxIncluded(subtotal);
   document.getElementById('totalDisplay').textContent = '¥' + subtotal.toLocaleString();
   const taxEl = document.getElementById('taxDisplay');
   if (taxEl) taxEl.textContent = '消費税（10%）：¥' + tax.toLocaleString();
@@ -560,6 +565,7 @@ async function generatePDF() {
     const { jsPDF } = window.jspdf;
     const g = id => document.getElementById(id).value.trim();
 
+    const subtotal = items.reduce((s, it) => s + it.qty * it.price, 0);
     const data = {
       accountName: g('accountName'),
       name: g('name'),
@@ -579,8 +585,8 @@ async function generatePDF() {
       accountHolder: g('accountHolder'),
       memo: g('memo'),
       items: items.filter(it => it.content),
-      total: items.reduce((s, it) => s + it.qty * it.price, 0),
-      tax: Math.floor(items.reduce((s, it) => s + it.qty * it.price, 0) * 0.1)
+      total: subtotal,
+      tax: calcTaxIncluded(subtotal)
     };
 
     // ★ PDFより先にスプレッドシートへ送信
@@ -680,6 +686,7 @@ async function generatePDF() {
       ctx.fillRect(60, y, 674, rowH);
       if (data.items[i]) {
         const it = data.items[i];
+        const itemAmount = it.qty * it.price;
         ctx.fillStyle = '#1a1a1a';
         font(12);
         ctx.textAlign = 'center';
@@ -688,9 +695,9 @@ async function generatePDF() {
         ctx.textAlign = 'right';
         ctx.fillText(fmt(it.price), cols.price + 82, y + 21);
         ctx.fillStyle = '#888';
-        ctx.fillText(fmt(Math.floor(it.qty * it.price * 0.1)), cols.tax + 82, y + 21);
+        ctx.fillText(fmt(calcTaxIncluded(itemAmount)), cols.tax + 82, y + 21);
         ctx.fillStyle = '#1a1a1a';
-        ctx.fillText(fmt(it.qty * it.price), cols.amount + 64, y + 21);
+        ctx.fillText(fmt(itemAmount), cols.amount + 64, y + 21);
       }
       ctx.strokeStyle = '#e0e0e0';
       ctx.lineWidth = 0.5;
