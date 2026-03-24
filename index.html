@@ -224,17 +224,68 @@ function renderItems() {
     row.className = 'item-row';
     const amount = item.qty * item.price;
     const tax = calcTaxIncluded(amount);
-    row.innerHTML = `
-      <input type="text" placeholder="内容" value="${item.content}" oninput="items[${i}].content=this.value">
-      <input type="text" inputmode="decimal" pattern="[0-9]*" placeholder="1" value="${item.qty}" oninput="items[${i}].qty=parseFloat(this.value)||0;renderItems()">
-      <input type="text" inputmode="decimal" pattern="[0-9]*" placeholder="0" value="${item.price}" oninput="items[${i}].price=parseFloat(this.value)||0;renderItems()">
-      <div class="amount-display" style="font-size:12px;color:#888;">¥${tax.toLocaleString()}</div>
-      <div class="amount-display">¥${amount.toLocaleString()}</div>
-      <button class="remove-btn" onclick="removeItem(${i})">×</button>
-    `;
+
+    const contentInput = document.createElement('input');
+    contentInput.type = 'text';
+    contentInput.placeholder = '内容';
+    contentInput.value = item.content;
+    contentInput.addEventListener('input', function() { items[i].content = this.value; });
+
+    const qtyInput = document.createElement('input');
+    qtyInput.type = 'text';
+    qtyInput.inputMode = 'decimal';
+    qtyInput.pattern = '[0-9]*';
+    qtyInput.placeholder = '1';
+    qtyInput.value = item.qty;
+    qtyInput.addEventListener('input', function() {
+      items[i].qty = parseFloat(this.value) || 0;
+      updateRowAmounts(row, i);
+      updateTotal();
+    });
+
+    const priceInput = document.createElement('input');
+    priceInput.type = 'text';
+    priceInput.inputMode = 'decimal';
+    priceInput.pattern = '[0-9]*';
+    priceInput.placeholder = '0';
+    priceInput.value = item.price;
+    priceInput.addEventListener('input', function() {
+      items[i].price = parseFloat(this.value) || 0;
+      updateRowAmounts(row, i);
+      updateTotal();
+    });
+
+    const taxDiv = document.createElement('div');
+    taxDiv.className = 'amount-display';
+    taxDiv.style.cssText = 'font-size:12px;color:#888;';
+    taxDiv.textContent = '¥' + tax.toLocaleString();
+
+    const amountDiv = document.createElement('div');
+    amountDiv.className = 'amount-display';
+    amountDiv.textContent = '¥' + amount.toLocaleString();
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'remove-btn';
+    removeBtn.textContent = '×';
+    removeBtn.addEventListener('click', function() { removeItem(i); });
+
+    row.appendChild(contentInput);
+    row.appendChild(qtyInput);
+    row.appendChild(priceInput);
+    row.appendChild(taxDiv);
+    row.appendChild(amountDiv);
+    row.appendChild(removeBtn);
     container.appendChild(row);
   });
   updateTotal();
+}
+
+function updateRowAmounts(row, i) {
+  const amount = items[i].qty * items[i].price;
+  const tax = calcTaxIncluded(amount);
+  const displays = row.querySelectorAll('.amount-display');
+  if (displays[0]) displays[0].textContent = '¥' + tax.toLocaleString();
+  if (displays[1]) displays[1].textContent = '¥' + amount.toLocaleString();
 }
 
 function updateTotal() {
